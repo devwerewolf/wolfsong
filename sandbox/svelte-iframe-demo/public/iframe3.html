@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iframe 3 - Message</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 2rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    
+    h2 {
+      margin: 0 0 2rem 0;
+      font-size: 1.5rem;
+    }
+    
+    .message-display {
+      background: white;
+      color: #333;
+      padding: 2rem;
+      border-radius: 16px;
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 2rem 0;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      word-break: break-word;
+    }
+    
+    .input-group {
+      margin: 2rem 0;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus {
+      outline: 3px solid white;
+    }
+    
+    .quick-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    button {
+      padding: 0.75rem 1rem;
+      border: 2px solid white;
+      border-radius: 8px;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: white;
+      color: #f5576c;
+    }
+    
+    .status-indicator {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+    }
+    
+    .status-dot.active {
+      background: #4CAF50;
+      box-shadow: 0 0 8px #4CAF50;
+    }
+    
+    .status-dot.inactive {
+      background: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>💬 Message Board</h2>
+    
+    <div class="message-display" id="messageDisplay">
+      Hello from parent!
+    </div>
+    
+    <div class="input-group">
+      <input 
+        type="text" 
+        id="messageInput" 
+        placeholder="Type a message..."
+      >
+    </div>
+    
+    <div class="quick-messages">
+      <button data-msg="Hello World! 👋">Hello World! 👋</button>
+      <button data-msg="Svelte is awesome! 🚀">Svelte is awesome! 🚀</button>
+      <button data-msg="State sync working! ✨">State sync working! ✨</button>
+    </div>
+    
+    <div class="status-indicator">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Checking status...</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createChildClient } from '/src/lib/iframe-state-sync/index.ts';
+    
+    const client = createChildClient({ debug: true });
+    
+    const messageDisplay = document.getElementById('messageDisplay');
+    const messageInput = document.getElementById('messageInput');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const quickBtns = document.querySelectorAll('.quick-messages button');
+    
+    // Subscribe to message changes
+    client.subscribe('message', (value) => {
+      messageDisplay.textContent = value;
+      messageInput.value = value;
+    });
+    
+    // Subscribe to active status
+    client.subscribe('isActive', (value) => {
+      if (value) {
+        statusDot.className = 'status-dot active';
+        statusText.textContent = 'Status: Active';
+      } else {
+        statusDot.className = 'status-dot inactive';
+        statusText.textContent = 'Status: Inactive';
+      }
+    });
+    
+    // Input handler with debounce
+    let timeout;
+    messageInput.addEventListener('input', (e) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        client.setValue('message', e.target.value);
+      }, 300);
+    });
+    
+    // Quick message buttons
+    quickBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const msg = btn.dataset.msg;
+        client.setValue('message', msg);
+      });
+    });
+  </script>
+</body>
+</html>
