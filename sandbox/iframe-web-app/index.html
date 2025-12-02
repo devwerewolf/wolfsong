@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iframe Communication</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Iframe Communication</h1>
+      <p>Root Count: <strong id="root-count-display">0</strong></p>
+      <div class="controls">
+        <button id="root-increment-btn">Increment</button>
+        <button id="root-decrement-btn">Decrement</button>
+        <button id="root-reset-btn">Reset</button>
+      </div>
+      <div class="controls">
+        <button id="send-to-iframe1">Send to Iframe 1</button>
+        <button id="send-to-iframe2">Send to Iframe 2</button>
+        <button id="send-to-iframe3">Send to Iframe 3</button>
+        <button id="send-to-all">Send to All</button>
+      </div>
+      <div class="iframe-grid">
+        <iframe id="content-frame" title="Content Frame"></iframe>
+        <iframe id="content-frame-2" title="Content Frame 2"></iframe>
+        <iframe id="content-frame-3" title="Content Frame 3"></iframe>
+        <iframe id="content-frame-4" title="Content Frame 4"></iframe>
+      </div>
+    </div>
+
+    <!-- Template for iframe 1 -->
+    <template id="iframe1-template">
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui; padding: 20px; background: #fff3cd; }
+          </style>
+        </head>
+        <body>
+          <h2>Iframe 1</h2>
+          <p>Count: <span id="count-display">0</span></p>
+          <button id="increment-btn">Increment</button>
+          <button id="decrement-btn">Decrement</button>
+          <button id="reset-btn">Reset</button>
+          
+          <script>
+            (function() {
+              console.log('Iframe 1 window.isRootAncestor:', window.isRootAncestor);
+              
+              const countDisplay = document.getElementById('count-display');
+              
+              window.addEventListener('message', (event) => {
+                console.log('Iframe 1 received:', event.data);
+                if (event.data.type === 'count-update') {
+                  countDisplay.textContent = event.data.count;
+                }
+              });
+              
+              document.getElementById('increment-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'increment', from: 'iframe1' }, '*');
+              });
+              
+              document.getElementById('decrement-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'decrement', from: 'iframe1' }, '*');
+              });
+              
+              document.getElementById('reset-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'reset', from: 'iframe1' }, '*');
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    </template>
+
+    <!-- Template for iframe 2 with nested iframe -->
+    <template id="iframe2-template">
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui; padding: 10px; background: #d1ecf1; }
+            #nested-frame { width: 100%; height: 120px; border: 2px solid #0056b3; border-radius: 4px; margin-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <h2>Iframe 2 (with nested)</h2>
+          <p>Count: <span id="count-display">0</span></p>
+          <button id="increment-btn">Increment</button>
+          <button id="decrement-btn">Decrement</button>
+          <button id="reset-btn">Reset</button>
+          <iframe id="nested-frame" title="Nested Frame"></iframe>
+          
+          <script>
+            (function() {
+              console.log('Iframe 2 window.isRootAncestor:', window.isRootAncestor);
+              
+              const countDisplay = document.getElementById('count-display');
+              
+              window.addEventListener('message', (event) => {
+                console.log('Iframe 2 received:', event.data);
+                if (event.data.type === 'count-update') {
+                  countDisplay.textContent = event.data.count;
+                }
+              });
+              
+              document.getElementById('increment-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'increment', from: 'iframe2' }, '*');
+              });
+              
+              document.getElementById('decrement-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'decrement', from: 'iframe2' }, '*');
+              });
+              
+              document.getElementById('reset-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'reset', from: 'iframe2' }, '*');
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    </template>
+
+    <!-- Template for nested iframe -->
+    <template id="nested-template">
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui; padding: 10px; background: #e7f3ff; font-size: 0.9em; }
+          </style>
+        </head>
+        <body>
+          <h3>Nested Iframe</h3>
+          <p>Count: <span id="count-display">0</span></p>
+          <button id="increment-btn">+</button>
+          <button id="decrement-btn">-</button>
+          <button id="reset-btn">Reset</button>
+          
+          <script>
+            (function() {
+              console.log('Nested iframe window.isRootAncestor:', window.isRootAncestor);
+              
+              const countDisplay = document.getElementById('count-display');
+              
+              window.addEventListener('message', (event) => {
+                console.log('Nested iframe received:', event.data);
+                if (event.data.type === 'count-update') {
+                  countDisplay.textContent = event.data.count;
+                }
+              });
+              
+              document.getElementById('increment-btn').addEventListener('click', () => {
+                window.top.postMessage({ type: 'increment', from: 'nested' }, '*');
+              });
+              
+              document.getElementById('decrement-btn').addEventListener('click', () => {
+                window.top.postMessage({ type: 'decrement', from: 'nested' }, '*');
+              });
+              
+              document.getElementById('reset-btn').addEventListener('click', () => {
+                window.top.postMessage({ type: 'reset', from: 'nested' }, '*');
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    </template>
+
+    <!-- Template for iframe 3 -->
+    <template id="iframe3-template">
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui; padding: 20px; background: #d4edda; }
+          </style>
+        </head>
+        <body>
+          <h2>Iframe 3</h2>
+          <p>Count: <span id="count-display">0</span></p>
+          <button id="increment-btn">Increment</button>
+          <button id="decrement-btn">Decrement</button>
+          <button id="reset-btn">Reset</button>
+          
+          <script>
+            (function() {
+              console.log('Iframe 3 window.isRootAncestor:', window.isRootAncestor);
+              
+              const countDisplay = document.getElementById('count-display');
+              
+              window.addEventListener('message', (event) => {
+                console.log('Iframe 3 received:', event.data);
+                if (event.data.type === 'count-update') {
+                  countDisplay.textContent = event.data.count;
+                }
+              });
+              
+              document.getElementById('increment-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'increment', from: 'iframe3' }, '*');
+              });
+              
+              document.getElementById('decrement-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'decrement', from: 'iframe3' }, '*');
+              });
+              
+              document.getElementById('reset-btn').addEventListener('click', () => {
+                window.parent.postMessage({ type: 'reset', from: 'iframe3' }, '*');
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    </template>
+
+    <!-- Template for iframe 4 - tries to access countAtom directly -->
+    <template id="iframe4-template">
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: system-ui; padding: 20px; background: #f8d7da; }
+          </style>
+        </head>
+        <body>
+          <h2>Iframe 4 (Direct Access)</h2>
+          <p>Count: <span id="count-display">0</span></p>
+          <button id="increment-btn">Increment (Direct)</button>
+          <button id="decrement-btn">Decrement (Direct)</button>
+          <button id="reset-btn">Reset (Direct)</button>
+          <p id="error-msg" style="color: red; font-size: 0.9em;"></p>
+          
+          <script>
+            (function() {
+              console.log('Iframe 4 window.isRootAncestor:', window.isRootAncestor);
+              
+              const countDisplay = document.getElementById('count-display');
+              const errorMsg = document.getElementById('error-msg');
+              
+              // Try to access parent's countAtom
+              let countAtom;
+              try {
+                countAtom = window.parent.countAtom;
+                if (countAtom) {
+                  errorMsg.textContent = '✓ Can access countAtom!';
+                  errorMsg.style.color = 'green';
+                } else {
+                  errorMsg.textContent = '✗ countAtom is undefined';
+                }
+              } catch (e) {
+                errorMsg.textContent = '✗ Error: ' + e.message;
+                console.error('Cannot access countAtom:', e);
+              }
+              
+              window.addEventListener('message', (event) => {
+                console.log('Iframe 4 received:', event.data);
+                if (event.data.type === 'count-update') {
+                  countDisplay.textContent = event.data.count;
+                }
+              });
+              
+              document.getElementById('increment-btn').addEventListener('click', () => {
+                try {
+                  if (countAtom) {
+                    countAtom.set(countAtom.get() + 1);
+                    errorMsg.textContent = '✓ Direct increment worked!';
+                    errorMsg.style.color = 'green';
+                  } else {
+                    errorMsg.textContent = '✗ countAtom not available';
+                  }
+                } catch (e) {
+                  errorMsg.textContent = '✗ Error: ' + e.message;
+                  console.error('Direct access failed:', e);
+                }
+              });
+              
+              document.getElementById('decrement-btn').addEventListener('click', () => {
+                try {
+                  if (countAtom) {
+                    countAtom.set(countAtom.get() - 1);
+                    errorMsg.textContent = '✓ Direct decrement worked!';
+                    errorMsg.style.color = 'green';
+                  } else {
+                    errorMsg.textContent = '✗ countAtom not available';
+                  }
+                } catch (e) {
+                  errorMsg.textContent = '✗ Error: ' + e.message;
+                  console.error('Direct access failed:', e);
+                }
+              });
+              
+              document.getElementById('reset-btn').addEventListener('click', () => {
+                try {
+                  if (countAtom) {
+                    countAtom.set(0);
+                    errorMsg.textContent = '✓ Direct reset worked!';
+                    errorMsg.style.color = 'green';
+                  } else {
+                    errorMsg.textContent = '✗ countAtom not available';
+                  }
+                } catch (e) {
+                  errorMsg.textContent = '✗ Error: ' + e.message;
+                  console.error('Direct access failed:', e);
+                }
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
