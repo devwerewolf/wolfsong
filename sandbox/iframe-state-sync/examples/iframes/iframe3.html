@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body { font-family: system-ui; padding: 20px; background: #d4edda; }
+      button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h2>Iframe 3 (Read-only)</h2>
+    <p>Count: <span id="count-display">0</span></p>
+    <p style="color: #666; font-size: 14px;">This iframe only displays the count</p>
+    
+    <script src="../lib/client-inline.js"></script>
+    <script>
+      // This simulates the app having "imported" the library (read-only app)
+      
+      // Initialize client - read-only, just displays parent's state
+      const client = createChildClient([
+        { key: 'count' }
+      ], { debug: true });
+      
+      // Subscribe to count changes
+      client.subscribeToAtom('count', (value) => {
+        document.getElementById('count-display').textContent = value;
+      });
+    </script>
+  </body>
+</html>

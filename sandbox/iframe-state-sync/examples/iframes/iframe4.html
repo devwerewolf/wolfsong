@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body { font-family: system-ui; padding: 10px; background: #f8d7da; }
+      button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+      #nested-frame { width: 100%; height: 120px; border: 2px solid #721c24; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <h2>Iframe 4 (with nested)</h2>
+    <p>Count: <span id="count-display">0</span></p>
+    <button id="double-btn">Double It</button>
+    <iframe id="nested-frame" src="nested.html" title="Nested Frame"></iframe>
+    
+    <script src="../lib/client-inline.js"></script>
+    <script>
+      // This simulates the app having "imported" the library
+      
+      // Initialize client - syncs with parent and forwards to nested iframe
+      const client = createChildClient([
+        { key: 'count' }
+      ], { debug: true });
+      
+      // Subscribe to count changes
+      client.subscribeToAtom('count', (value) => {
+        document.getElementById('count-display').textContent = value;
+        
+        // Forward to nested iframe
+        const nested = document.getElementById('nested-frame');
+        if (nested && nested.contentWindow) {
+          nested.contentWindow.postMessage({
+            type: 'atom-sync',
+            key: 'count',
+            value,
+            timestamp: Date.now()
+          }, '*');
+        }
+      });
+      
+      // Double button
+      document.getElementById('double-btn').addEventListener('click', () => {
+        const current = client.getAtomValue('count');
+        client.updateAtom('count', current * 2);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body { font-family: system-ui; padding: 20px; background: #fff3cd; }
+      button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h2>Iframe 1</h2>
+    <p>Count: <span id="count-display">0</span></p>
+    <button id="increment-btn">Increment</button>
+    <button id="decrement-btn">Decrement</button>
+    <button id="reset-btn">Reset</button>
+    
+    <script src="../lib/client-inline.js"></script>
+    <script>
+      // This simulates the app having "imported" the library
+      // In reality, this would be bundled into the app's build
+      
+      // Initialize client - initialValue is optional (will receive from parent)
+      const client = createChildClient([
+        { key: 'count' }
+      ], { debug: true });
+      
+      // Subscribe to count changes and update display
+      client.subscribeToAtom('count', (value) => {
+        document.getElementById('count-display').textContent = value;
+      });
+      
+      // Button handlers
+      document.getElementById('increment-btn').addEventListener('click', () => {
+        const current = client.getAtomValue('count');
+        client.updateAtom('count', current + 1);
+      });
+      
+      document.getElementById('decrement-btn').addEventListener('click', () => {
+        const current = client.getAtomValue('count');
+        client.updateAtom('count', current - 1);
+      });
+      
+      document.getElementById('reset-btn').addEventListener('click', () => {
+        client.updateAtom('count', 0);
+      });
+    </script>
+  </body>
+</html>
