@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Root Window - iframe-state-sync Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .window-info {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .state-display {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      margin: 10px 0;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    iframe {
+      width: 100%;
+      height: 400px;
+      border: 2px solid #007bff;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="window-info">
+      <h1>🌳 Root Window</h1>
+      <p>This is the root window. It will automatically detect that it has no parent.</p>
+      
+      <div class="state-display" id="state-display">
+        State: (not initialized)
+      </div>
+      
+      <div class="controls">
+        <input type="text" id="key-input" placeholder="Key" value="counter">
+        <input type="text" id="value-input" placeholder="Value" value="0">
+        <button onclick="updateState()">Update State</button>
+      </div>
+      
+      <div id="role-info" style="margin-top: 10px; color: #666;">
+        Role: (detecting...)
+      </div>
+    </div>
+    
+    <iframe src="child.html" id="child-frame"></iframe>
+  </div>
+
+  <script type="module">
+    const MESSAGE_NAMESPACE = 'iframe-state-sync';
+    let localState = { counter: 0 };
+    let children = [];
+    
+    console.log('[ROOT] Window loaded');
+    
+    // Listen for messages from children
+    window.addEventListener('message', (event) => {
+      const { type, namespace, payload } = event.data;
+      if (namespace !== MESSAGE_NAMESPACE) return;
+      
+      console.log('[ROOT] Received message:', { type, payload });
+      
+      if (type === 'CHILD_REGISTER') {
+        console.log('[ROOT] Child registered');
+        // Send acknowledgment
+        event.source.postMessage({
+          namespace: MESSAGE_NAMESPACE,
+          type: 'PARENT_ACK',
+          payload: { state: localState }
+        }, '*');
+      } else if (type === 'STATE_UPDATE') {
+        // Merge state from child
+        localState = { ...localState, ...payload.state };
+        updateDisplay();
+        // Forward to other children
+        broadcastToChildren({ type: 'STATE_UPDATE', payload: { state: payload.state } });
+      }
+    });
+    
+    // Detect children
+    window.addEventListener('load', () => {
+      const iframe = document.getElementById('child-frame');
+      if (iframe) {
+        children.push(iframe.contentWindow);
+        console.log('[ROOT] Child iframe detected');
+      }
+      document.getElementById('role-info').textContent = 'Role: Root (no parent detected)';
+    });
+    
+    function broadcastToChildren(message) {
+      children.forEach(child => {
+        child.postMessage({ namespace: MESSAGE_NAMESPACE, ...message }, '*');
+      });
+    }
+    
+    function updateDisplay() {
+      document.getElementById('state-display').textContent = 
+        'State: ' + JSON.stringify(localState, null, 2);
+    }
+    
+    window.updateState = function() {
+      const key = document.getElementById('key-input').value;
+      const value = document.getElementById('value-input').value;
+      localState = { ...localState, [key]: isNaN(value) ? value : Number(value) };
+      console.log('[ROOT] State updated:', localState);
+      updateDisplay();
+      // Broadcast to children
+      broadcastToChildren({ type: 'STATE_UPDATE', payload: { state: localState } });
+    };
+    
+    updateDisplay();
+  </script>
+</body>
+</html>
